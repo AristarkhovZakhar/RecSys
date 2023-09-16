@@ -25,3 +25,11 @@ class Channels:
 class YADisk:
     api_key: str
 
+
+@dataclass_json
+@dataclass
+class MainConfig:
+    document_endpoint: str
+    hf_access_token: str
+    yandex_qa_token: str
+
