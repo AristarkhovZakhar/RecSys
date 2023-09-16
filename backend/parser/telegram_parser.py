@@ -1,14 +1,15 @@
-import multiprocessing as mp
-import sys
-import os
 import json
+import os
+import sys
+from queue import Queue
+from typing import Tuple
+
 from telethon import TelegramClient, events
-from typing import Dict, Any, Tuple
-from multiprocessing import Process, Queue
-sys.path.append("/home/parser/")
+
+sys.path.append("/Users/zakhar/Projects/RecSys/backend/")
+sys.path.append("/Users/zakhar/Projects/RecSys/backend/storage")
 from configs.config import API, Channels
-from parser_abstract import ParserInterface
-sys.path.append("/home/parser/backend/")
+
 from storage.ya_disk_storage import YaDiskStorage
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
@@ -30,31 +31,34 @@ class Message:
     media: Media
 
 
-class TelegramParser(ParserInterface):
-    DATA_DIR = './data'
+class TelegramParser:
+    DATA_DIR = '/Users/zakhar/Projects/RecSys/backend/parser/data'
 
     def __init__(
             self,
             client: TelegramClient,
             channels: Channels,
-            storage: YaDiskStorage
+            n_auto_push_files: int = 2
+
     ) -> None:
         super().__init__()
         self.client = client
         self.channels = channels
-        self.storage = storage
         self.queue = Queue()
         self.filename_counter = 0
         self.storage_process = None
+        self.n_auto_push_files = n_auto_push_files
 
         os.makedirs(self.DATA_DIR, exist_ok=True)
         checked_media = ['photo', 'webpage', 'document']
-
-        @client.on(events.NewMessage)
+        print(self.channels.channels.keys())
+        @self.client.on(events.NewMessage)
         async def handle_message(event: events.NewMessage) -> None:
+            os.makedirs(self.DATA_DIR, exist_ok=True)
             new = event.message
             print(new)
-            if not new.out and event.chat_id in self.channels.channels.keys():
+            print(event.chat_id)
+            if not new.out and str(event.chat_id) in self.channels.channels.keys():
                 entity = await self.client.get_entity(event.chat_id)
                 group_url = f"https://t.me/{entity.username}"
                 text = new.message
@@ -72,8 +76,22 @@ class TelegramParser(ParserInterface):
                 media = Media.from_dict(collected_info)
                 message = Message(text, message_url, media)
                 self.queue.put(message)
+                print(self.queue.qsize())
+                if self.queue.qsize() >= self.n_auto_push_files:
+                    filepathes = []
+                    for _ in range(self.n_auto_push_files):
+                        message = self.queue.get()
+                        filepath = f"{self.DATA_DIR}/{self.filename_counter}.txt"
+                        filepathes.append(filepath)
+                        print(filepath)
+                        with open(filepath, 'w') as f:
+                            f.write(message.text)
+                    print(f"python3 push_to_storage.py --filepathes {' '.join(filepathes)}")
+                    os.system(f"python3 push_to_storage.py --filepathes {' '.join(filepathes)}")
+                    self.filename_counter += 1
 
     def start_client(self) -> None:
+        print('started')
         self.client.start()
         with self.client:
             self.client.run_until_disconnected()
@@ -84,36 +102,13 @@ class TelegramParser(ParserInterface):
             f.write(message.text)
         return filepath, str(self.filename_counter) + ".txt"
 
-    def storage_messages(self):
-        while True:
-            if not self.queue.empty():
-                message = self.queue.get()
-                try:
-                    self.storage.upload(*self.preapre_message_to_upload(message))
-                    self.filename_counter += 1
-                except Exception:
-                    continue
-
-    def run(self):
-        self.storage_process = Process(target=self.storage_messages())
-        self.storage_process.start()
-        self.start_client()
-
-    def stop(self):
-        self.storage_process.terminate()
-        self.storage_process.join()
-        if self.client.is_connected():
-            self.client.disconnect()
-
 
 if __name__ == "__main__":
-    mp.set_start_method('fork')
     with open("../../configs/api.json") as f:
         api = API.from_dict(json.load(f))
     with open("../../configs/channels.json") as f:
         ap = json.load(f)
         channels = Channels.from_dict(ap)
     client = TelegramClient(api.username, api.api_id, api.api_hash)
-    storage = YaDiskStorage("y0_AgAAAAAtTRFlAAnp9QAAAADjS1FmPbAPnfASRgapxZLElKH9_fQ_G3I")
-    parser = TelegramParser(client, channels, storage)
-    parser.run()
+    parser = TelegramParser(client, channels)
+    parser.start_client()

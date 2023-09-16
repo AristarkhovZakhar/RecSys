@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from configs import config
 from typing import List
 
 
