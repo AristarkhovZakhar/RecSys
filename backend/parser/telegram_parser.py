@@ -1,14 +1,11 @@
 import json
 import os
-import sys
 from queue import Queue
 from typing import Tuple
 
 from telethon import TelegramClient, events
 
-sys.path.append("/Users/zakhar/Projects/RecSys/backend/")
-sys.path.append("/Users/zakhar/Projects/RecSys/backend/storage")
-from configs.config import API, Channels
+from configs.config import APIConfig, ChannelsConfig
 
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
@@ -31,12 +28,12 @@ class Message:
 
 
 class TelegramParser:
-    DATA_DIR = '/Users/zakhar/Projects/RecSys/backend/parser/data'
+    DATA_DIR = './data'
 
     def __init__(
             self,
             client: TelegramClient,
-            channels: Channels,
+            channels: ChannelsConfig,
             n_auto_push_files: int = 2
 
     ) -> None:
@@ -91,7 +88,6 @@ class TelegramParser:
                     os.system(f"python3 push_to_storage.py --filepathes {' '.join(filepathes)}")
 
     def start_client(self) -> None:
-        print('started')
         self.client.start()
         with self.client:
             self.client.run_until_disconnected()
@@ -105,10 +101,10 @@ class TelegramParser:
 
 if __name__ == "__main__":
     with open("../../configs/api.json") as f:
-        api = API.from_dict(json.load(f))
+        api = APIConfig.from_dict(json.load(f))
     with open("../../configs/channels.json") as f:
         ap = json.load(f)
-        channels = Channels.from_dict(ap)
+        channels = ChannelsConfig.from_dict(ap)
     client = TelegramClient(api.username, api.api_id, api.api_hash)
     parser = TelegramParser(client, channels)
     parser.start_client()

@@ -1,23 +1,22 @@
-from telegram_parser import TelegramParser
 import json
-import sys
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from configs.config import API, Channels
-from telethon import TelegramClient
-from airflow.operators.empty import EmptyOperator
 from datetime import datetime
-sys.path.append("/home/parser/backend/")
-from storage.ya_disk_storage import YaDiskStorage
-from airflow.api.client.local_client import Client
-with open("/home/parser/configs/api.json") as f:
-    api = API.from_dict(json.load(f))
+
+from airflow import DAG
+from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import PythonOperator
+from telethon import TelegramClient
+
+from configs.config import APIConfig, ChannelsConfig
+from telegram_parser import TelegramParser
+
+with open("../configs/api.json") as f:
+    api = APIConfig.from_dict(json.load(f))
 with open("/home/parser/configs/channels.json") as f:
     ap = json.load(f)
-    channels = Channels.from_dict(ap)
+    channels = ChannelsConfig.from_dict(ap)
+
 client = TelegramClient(api.username, api.api_id, api.api_hash)
-storage = YaDiskStorage("y0_AgAAAAAtTRFlAAnp9QAAAADjS1FmPbAPnfASRgapxZLElKH9_fQ_G3I")
-parser = TelegramParser(client, channels.channels, storage)
+parser = TelegramParser(client, channels)
 
 parser_dag = DAG(
     dag_id='parser-dag',
@@ -28,13 +27,13 @@ parser_dag = DAG(
 
 python_task = PythonOperator(
     task_id='telegram-parser',
-    python_callable=parser.run,
+    python_callable=parser.start_client,
     dag=parser_dag
 )
 
 empty_task = EmptyOperator(
-    task_id = 'end',
-    dag = parser_dag,
+    task_id='end',
+    dag=parser_dag,
 )
 
 python_task >> empty_task
