@@ -2,9 +2,10 @@ from yadisk import YaDisk
 import sys
 
 sys.path.append("/home/parser/backend/storage")
-from abstract_storage import Storage
+# from abstract_storage import Storage
+from typing import Generator
 import os
-from typing import List
+
 
 
 class YaDiskStorage:
@@ -40,5 +41,6 @@ class YaDiskStorage:
     def remove(self, endpoint_filename: str) -> None:
         self.disk.remove(self.get_endpoint_path(endpoint_filename))
 
-    def get_files_list(self) -> List:
-        return list(self.disk.listdir(self.workdir))
+    def get_files_list(self, sort_datatime: bool = False) -> Generator:
+        listdir = self.disk.listdir(self.workdir)
+        return sorted(listdir, key=lambda file: file['created'])[::-1] if sort_datatime else listdir
