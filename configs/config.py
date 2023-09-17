@@ -28,8 +28,11 @@ class YAServices:
 
 @dataclass_json
 @dataclass
-class MainConfig:
-    document_endpoint: str
-    hf_access_token: str
-    yandex_qa_token: str
+class LabelerTags:
+    tags: Optional
 
+
+@dataclass_json
+@dataclass
+class HFConfig:
+    access_token: str
