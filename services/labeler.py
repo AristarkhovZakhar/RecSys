@@ -23,8 +23,9 @@ class Labeler:
             "parameters": {"candidate_labels": self.labels}
             }
         async with session.post(self.api_url, headers=self.headers, json=payload) as post:
-            return await post.json()
-
+            js = await post.json()
+            js["url"] = url
+            return js
     async def push_news_to_labeler(self, service_urls: List[str]):
         async with ClientSession() as session:
             tasks = []
