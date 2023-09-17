@@ -2,11 +2,10 @@ import sys
 import os
 
 from typing import List
-
-sys.path.append('../storage')
-
 from abc import ABC
 from backend.storage.ya_disk_storage import YaDiskStorage
+
+sys.path.append('../storage')
 
 
 class Scheduler(ABC):
