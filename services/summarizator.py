@@ -26,6 +26,15 @@ class YaGPTSummary:
         async with session.post(endpoint, json={'article_url': url},
                                 headers={'Authorization': f'OAuth {self.__token}'}) as post:
             js = await post.json()
+            if not 'sharing_url' in js.keys():
+                info = {
+                    'success': False,
+                    'url': url,
+                    'title': '',
+                    'tokens': [],
+                    'summary': ''
+                }
+                return info
             url = js['sharing_url']
             page = requests.get(url)
             soup = BeautifulSoup(page.text, "html.parser")
@@ -34,6 +43,8 @@ class YaGPTSummary:
                       soup.find_all('li', class_='theses-item svelte-1tflzpo')]
             summary = "".join(tokens)
             info = {
+                'success' : True,
+                'url': url,
                 'title': title,
                 'tokens': tokens,
                 'summary': summary
@@ -49,7 +60,7 @@ class YaGPTSummary:
             responses = await asyncio.gather(*tasks)
         return responses
 
-    def run_push_news_to_service(self, **kwargs):
+    def run_push_news_to_summarization(self, **kwargs):
         ti = kwargs['ti']
         service_urls = ti.xcom_pull(task_ids='run_push_news_to_service')
         loop = asyncio.get_running_loop()
