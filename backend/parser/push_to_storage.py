@@ -8,14 +8,12 @@ sys.path.append("/Users/zakhar/Projects/RecSys/backend/storage")
 
 from typing import List
 from storage.ya_disk_storage import YaDiskStorage
-from configs.config import YAServices
-
-storage = YaDiskStorage("y0_AgAAAAAtTRFlAAnp9QAAAADjS1FmPbAPnfASRgapxZLElKH9_fQ_G3I")
+from configs.config import YAServiceConfig
 
 with open('configs/ya.json') as f:
     data = json.load(f)
 
-ya_config = YAServices.from_dict(data)
+ya_config = YAServiceConfig.from_dict(data)
 storage = YaDiskStorage(ya_config.qa_token)
 
 
