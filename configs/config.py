@@ -1,11 +1,12 @@
 from dataclasses import dataclass
+from typing import Optional
+
 from dataclasses_json import dataclass_json
-from typing import Dict, Optional
 
 
 @dataclass_json
 @dataclass
-class API:
+class APIConfig:
     api_id: int
     api_hash: str
     username: str
@@ -16,20 +17,27 @@ class API:
 
 @dataclass_json
 @dataclass
-class Channels:
+class ChannelsConfig:
     channels: Optional
 
 
 @dataclass_json
 @dataclass
-class YAServices:
+class YAServiceConfig:
     qa_token: str
 
 
 @dataclass_json
 @dataclass
-class LabelerTags:
-    tags: Optional
+class DocumentServiceConfig:
+    endpoint: str
+
+
+@dataclass_json
+@dataclass
+class LabelerConfig:
+    hf_token: str
+    labels: Optional
 
 
 @dataclass_json

@@ -2,26 +2,28 @@ from services.document import DocumentService
 from services.labeler import Labeler
 from services.summarizator import YaGPTSummary
 
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+
 from datetime import datetime
 
 import json
 
-from dataclasses import dataclass
-from dataclasses_json import dataclass_json
+from configs.config import DocumentServiceConfig, YAServiceConfig, LabelerConfig
 
-from configs.config import MainConfig
-
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-
-with open('configs/main_config.json') as f:
+with open("configs/document_service.json") as f:
     data = json.load(f)
+    document_service_config = DocumentServiceConfig.from_dict(data)
+with open("configs/ya.json") as f:
+    data = json.load(f)
+    ya_service_config = YAServiceConfig.from_dict(data)
+with open("configs/labeler.json") as f:
+    data = json.load(f)
+    labeler_service_config = LabelerConfig.from_dict(data)
 
-conf = MainConfig.from_json(data)
-
-document_service = DocumentService(conf.endpoint)
-summarizator = YaGPTSummary(conf.yandex_qa_token)
-labeler = Labeler(conf.hf_access_token)
+document = DocumentService(document_service_config.endpoint)
+summarizator = YaGPTSummary(ya_service_config.qa_token)
+labeler = Labeler(labeler_service_config.hf_token, labeler_service_config.labels)
 
 with DAG(
     dag_id='main',
@@ -31,7 +33,7 @@ with DAG(
 
     news_service = PythonOperator(
             task_id='run_push_news_to_service',
-            python_callable=document_service.run_push_news_to_service,
+            python_callable=document.run_push_news_to_service,
         )
     summarization = PythonOperator(
             task_id='get_summary',

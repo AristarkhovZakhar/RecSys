@@ -9,10 +9,10 @@ nest_asyncio.apply()
 class Labeler:
     api_url = "https://api-inference.huggingface.co/models/MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7"
 
-    def __init__(self, hf_access_token: str, tags: List[str]):
-        self.token = hf_access_token
-        self.headers = {"Authorization": f"Bearer {self.token}"}
-        self.tags = tags
+    def __init__(self, hf_token: str, labels: List[str]):
+        self.hf_token = hf_token
+        self.headers = {"Authorization": f"Bearer {self.hf_token}"}
+        self.labels = labels
 
     async def __call__(self, session, url: str):
         page = requests.get(url)
@@ -20,7 +20,7 @@ class Labeler:
         text = soup.find_all('p')[0].get_text()
         payload = {
             "inputs": text,
-            "parameters": {"candidate_labels": self.tags}
+            "parameters": {"candidate_labels": self.labels}
             }
         async with session.post(self.api_url, headers=self.headers, json=payload) as post:
             return await post.json()
