@@ -15,7 +15,7 @@ def push_to_yandex(filepathes: List[str]):
     for filepath in filepathes:
         filename = filepath.split('/')[-1]
         storage.upload(filepath, filename)
-        os.system(f"rm {filepath}")
+        #os.system(f"rm {filepath}")
 
 
 if __name__ == "__main__":

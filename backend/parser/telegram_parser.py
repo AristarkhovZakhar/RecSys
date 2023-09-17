@@ -56,9 +56,9 @@ class TelegramParser:
         async def handle_message(event: events.NewMessage) -> None:
             os.makedirs(self.DATA_DIR, exist_ok=True)
             new = event.message
-            print(new)
-            print(event.chat_id)
-            if not new.out and str(event.chat_id) in self.channels.channels.keys():
+            if not new.out and str(event.chat_id) in self.channels.channels.keys() and new.message:
+                print(new)
+                print(event.chat_id)
                 entity = await self.client.get_entity(event.chat_id)
                 group_url = f"https://t.me/{entity.username}"
                 text = new.message
@@ -86,9 +86,9 @@ class TelegramParser:
                         print(filepath)
                         with open(filepath, 'w') as f:
                             f.write(message.text)
+                        self.filename_counter += 1
                     print(f"python3 push_to_storage.py --filepathes {' '.join(filepathes)}")
                     os.system(f"python3 push_to_storage.py --filepathes {' '.join(filepathes)}")
-                    self.filename_counter += 1
 
     def start_client(self) -> None:
         print('started')
