@@ -40,5 +40,5 @@ class YaDiskStorage:
     def remove(self, endpoint_filename: str) -> None:
         self.disk.remove(self.get_endpoint_path(endpoint_filename))
 
-    def get_files_list(self) -> List[str]:
+    def get_files_list(self) -> List:
         return list(self.disk.listdir(self.workdir))

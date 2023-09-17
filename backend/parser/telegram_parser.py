@@ -10,7 +10,6 @@ sys.path.append("/Users/zakhar/Projects/RecSys/backend/")
 sys.path.append("/Users/zakhar/Projects/RecSys/backend/storage")
 from configs.config import API, Channels
 
-from storage.ya_disk_storage import YaDiskStorage
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 
@@ -52,6 +51,7 @@ class TelegramParser:
         os.makedirs(self.DATA_DIR, exist_ok=True)
         checked_media = ['photo', 'webpage', 'document']
         print(self.channels.channels.keys())
+
         @self.client.on(events.NewMessage)
         async def handle_message(event: events.NewMessage) -> None:
             os.makedirs(self.DATA_DIR, exist_ok=True)

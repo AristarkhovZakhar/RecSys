@@ -22,8 +22,8 @@ class Channels:
 
 @dataclass_json
 @dataclass
-class YADisk:
-    api_key: str
+class YAServices:
+    qa_token: str
 
 
 @dataclass_json
