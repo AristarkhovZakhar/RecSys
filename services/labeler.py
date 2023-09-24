@@ -4,7 +4,9 @@ import asyncio
 from aiohttp import ClientSession
 import nest_asyncio
 from bs4 import BeautifulSoup
+
 nest_asyncio.apply()
+
 
 class Labeler:
     api_url = "https://api-inference.huggingface.co/models/MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7"
@@ -21,11 +23,12 @@ class Labeler:
         payload = {
             "inputs": text,
             "parameters": {"candidate_labels": self.labels}
-            }
+        }
         async with session.post(self.api_url, headers=self.headers, json=payload) as post:
             js = await post.json()
             js["url"] = url
             return js
+
     async def push_news_to_labeler(self, service_urls: List[str]):
         async with ClientSession() as session:
             tasks = []
@@ -42,4 +45,5 @@ class Labeler:
         future = asyncio.ensure_future(self.push_news_to_labeler(service_urls))
         loop.run_until_complete(future)
         responses = future.result()
+        ti.xcom_push(key='labeler for ranker', value=responses)
         return responses

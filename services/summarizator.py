@@ -43,7 +43,7 @@ class YaGPTSummary:
                       soup.find_all('li', class_='theses-item svelte-1tflzpo')]
             summary = "".join(tokens)
             info = {
-                'success' : True,
+                'success': True,
                 'url': url,
                 'title': title,
                 'tokens': tokens,
@@ -67,4 +67,5 @@ class YaGPTSummary:
         future = asyncio.ensure_future(self.push_news_to_summarization(service_urls))
         loop.run_until_complete(future)
         responses = future.result()
+        ti.xcom_push(key='summarizator for ranker', value=responses)
         return responses
