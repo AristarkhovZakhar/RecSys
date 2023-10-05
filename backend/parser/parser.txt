@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/parser/backend/parser/telegram_parser.py", line 114, in <module>
+    parser.start_client()
+  File "/home/parser/backend/parser/telegram_parser.py", line 94, in start_client
+    logger.info("START PARSER")
+NameError: name 'logger' is not defined

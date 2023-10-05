@@ -2,28 +2,29 @@ import argparse
 import json
 import os
 import sys
-
-sys.path.append("/Users/zakhar/Projects/RecSys/backend/")
-sys.path.append("/Users/zakhar/Projects/RecSys/backend/storage")
+data_dir = '/home/parser'
+#data_dir = "/opt/airflow/dags"
+sys.path.append(f"{data_dir}/")
+sys.path.append(f"{data_dir}/configs")
+sys.path.append(f"{data_dir}/backend/")
+sys.path.append(f"{data_dir}/backend/storage/")
 
 from typing import List
 from storage.ya_disk_storage import YaDiskStorage
-from configs.config import YAServices
+from configs.config import YAServiceConfig
 
-storage = YaDiskStorage("y0_AgAAAAAtTRFlAAnp9QAAAADjS1FmPbAPnfASRgapxZLElKH9_fQ_G3I")
-
-with open('configs/ya.json') as f:
+with open(f'{data_dir}/configs/ya.json') as f:
     data = json.load(f)
 
-ya_config = YAServices.from_dict(data)
+ya_config = YAServiceConfig.from_dict(data)
 storage = YaDiskStorage(ya_config.qa_token)
 
 
 def push_to_yandex(filepathes: List[str]):
     for filepath in filepathes:
         filename = filepath.split('/')[-1]
-        storage.upload(filepath, filename)
-        os.system(f"rm {filepath}")
+        #storage.upload(filepath, filename)
+        #os.system(f"rm {filepath}")
 
 
 if __name__ == "__main__":

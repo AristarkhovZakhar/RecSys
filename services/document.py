@@ -26,9 +26,11 @@ class DocumentService:
 
     def run_push_news_to_service(self, **kwargs):
         ti = kwargs['ti']
-        news = ti.xcom_pull(task_ids='get from storage')
-        loop = asyncio.get_running_loop()
+        news = ti.xcom_pull(task_ids="run_push_from_disk", key="texts for webservice")
+        print(news)
+        loop = asyncio.get_event_loop()
         future = asyncio.ensure_future(self.push_news_to_service(news))
         loop.run_until_complete(future)
-        responses = future.result()
-        return responses
+        responces = future.result()
+        ti.xcom_push(key="document service", value=responces)
+        return responces

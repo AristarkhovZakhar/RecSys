@@ -17,30 +17,29 @@ class Scheduler(ABC):
 
 
 class YaDiskScheduler(Scheduler):
-    TMP_STORAGE_TO_READ = '../storage_to_read/file'
-
-    def __init__(self, storage: YaDiskStorage, n_files_to_push: int = 50):
-        self.storage = storage
+    def __init__(self, path_to_storage: str, n_files_to_push: int = 2):
+        self.path_to_storage = path_to_storage
         self.n_files_to_push = n_files_to_push
 
     def listen(self):
-        return list(self.storage.get_files_list(sort_datatime=True))[:self.n_files_to_push]
+        return sorted(os.listdir(self.path_to_storage), key=lambda x:int(x.split('.')[0]))[:self.n_files_to_push]
 
-    def _download_files(self, files) -> List[str]:
+    def _download_files(self, files):
         texts = []
+        filepathes = []
         for file in files:
-            self.storage.download(file['path'].split('/')[-1], self.TMP_STORAGE_TO_READ)
-            with open(self.TMP_STORAGE_TO_READ) as f:
+            filepath = os.path.join(self.path_to_storage, file)
+            filepathes.append(filepath)
+            with open(filepath) as f:
                 texts.append(' '.join(f.readlines()))
-        os.remove(self.TMP_STORAGE_TO_READ)
-
-        return texts
+        return filepathes, texts
 
     def run_push_service(self, **kwargs):
         ti = kwargs['ti']
         while len(files := self.listen()) != self.n_files_to_push:
             pass
-
-        texts = self._download_files(files)
+        filepathes, texts = self._download_files(files)
+        print(texts)
         ti.xcom_push(key='texts for webservice', value=texts)
+        ti.xcom_push(key='filepathes to remove', value=filepathes)
         return texts

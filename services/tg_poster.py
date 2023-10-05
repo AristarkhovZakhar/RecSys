@@ -1,3 +1,6 @@
+import sys
+sys.path.append("../storage")
+
 from typing import List, Dict, Union
 from telethon.sync import TelegramClient
 
@@ -28,12 +31,14 @@ class Ranging:
         return ranked_news
 
     def _get_messages_from_summarizer(self, items: List[Dict]) -> None:
+        print(items)
         for item in items:
             self._news[item['url']] = self._news.get(item['url'], {})
-            self._news[item['url']]['text'] = item['summarize']
+            self._news[item['url']]['text'] = item['summary']
             self._news[item['url']]['score'] = 0
 
     def _get_messages_from_labeler(self, items: List[Dict]) -> None:
+        print(items)
         for item in items:
             self._news[item['url']]['labels'] = item['labels']
 

@@ -34,6 +34,7 @@ class YaGPTSummary:
                     'tokens': [],
                     'summary': ''
                 }
+                print(info)
                 return info
             url = js['sharing_url']
             page = requests.get(url)
@@ -62,8 +63,8 @@ class YaGPTSummary:
 
     def run_push_news_to_summarization(self, **kwargs):
         ti = kwargs['ti']
-        service_urls = ti.xcom_pull(task_ids='run_push_news_to_service')
-        loop = asyncio.get_running_loop()
+        service_urls = ti.xcom_pull(task_ids='run_push_news_to_service', key='document service')
+        loop = asyncio.get_event_loop()
         future = asyncio.ensure_future(self.push_news_to_summarization(service_urls))
         loop.run_until_complete(future)
         responses = future.result()
