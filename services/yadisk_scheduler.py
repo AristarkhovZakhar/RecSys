@@ -1,9 +1,6 @@
-import sys
 import os
-
-from typing import List
+import sys
 from abc import ABC
-from backend.storage.ya_disk_storage import YaDiskStorage
 
 sys.path.append('../storage')
 
@@ -22,7 +19,7 @@ class YaDiskScheduler(Scheduler):
         self.n_files_to_push = n_files_to_push
 
     def listen(self):
-        return sorted(os.listdir(self.path_to_storage), key=lambda x:int(x.split('.')[0]))[:self.n_files_to_push]
+        return sorted(os.listdir(self.path_to_storage), key=lambda x: int(x.split('.')[0]))[:self.n_files_to_push]
 
     def _download_files(self, files):
         texts = []
@@ -39,7 +36,6 @@ class YaDiskScheduler(Scheduler):
         while len(files := self.listen()) != self.n_files_to_push:
             pass
         filepathes, texts = self._download_files(files)
-        print(texts)
         ti.xcom_push(key='texts for webservice', value=texts)
         ti.xcom_push(key='filepathes to remove', value=filepathes)
         return texts

@@ -29,13 +29,11 @@ class YaGPTSummary:
             if not 'sharing_url' in js.keys():
                 info = {
                     'success': False,
-                    'url': url,
                     'title': '',
                     'tokens': [],
                     'summary': ''
                 }
-                print(info)
-                return info
+                return {url: info}
             url = js['sharing_url']
             page = requests.get(url)
             soup = BeautifulSoup(page.text, "html.parser")
@@ -45,12 +43,11 @@ class YaGPTSummary:
             summary = "".join(tokens)
             info = {
                 'success': True,
-                'url': url,
                 'title': title,
                 'tokens': tokens,
                 'summary': summary
             }
-        return info
+        return {url: info}
 
     async def push_news_to_summarization(self, service_urls: List[str]):
         async with ClientSession() as session:

@@ -1,8 +1,9 @@
-from typing import List
-import requests
 import asyncio
-from aiohttp import ClientSession
+from typing import List
+
 import nest_asyncio
+import requests
+from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from transformers import pipeline
 
@@ -11,6 +12,7 @@ nest_asyncio.apply()
 
 class AsyncLabeler:
     api_url = "https://api-inference.huggingface.co/models/MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7"
+
     def __init__(self, hf_token: str, labels: List[str]):
         self.hf_token = hf_token
         self.headers = {"Authorization": f"Bearer {self.hf_token}"}
@@ -41,7 +43,6 @@ class AsyncLabeler:
 
     def run_push_news_to_labeler(self, **kwargs):
         ti = kwargs['ti']
-        #texts = ti.xcom_pull(task_ids="run_push_from_disk", key="texts for webservice")
         service_urls = ti.xcom_pull(task_ids='run_push_news_to_service', key="document service")
         loop = asyncio.get_event_loop()
         future = asyncio.ensure_future(self.push_news_to_labeler(service_urls))
@@ -50,10 +51,11 @@ class AsyncLabeler:
         ti.xcom_push(key='labeler for ranker', value=responses)
         return responses
 
+
 class Labeler:
     def __init__(self, model_name: str, labels: List[str]):
         self.classifier = pipeline("zero-shot-classification", model=model_name)
-        self.labels = labels[:9]
+        self.labels = labels[:9]  # hardcode for this model
         self.labels += self.__get_unrecognized_label()
 
     def __get_unrecognized_label(self):
@@ -64,10 +66,9 @@ class Labeler:
         page = requests.get(url)
         soup = BeautifulSoup(page.text, "html.parser")
         text = soup.find_all('p')[0].get_text()
-        output = classifier(text, candidate_labels=self.labels, multi_label=False)
+        output = self.classifier(text, candidate_labels=self.labels, multi_label=False)
         output['text'] = text
-        output['url'] = url
-        return output
+        return {url: output}
 
     def run_push_news_to_labeler(self, **kwargs):
         ti = kwargs['ti']
@@ -77,4 +78,3 @@ class Labeler:
             labeled_urls.append(self(url))
         ti.xcom_push(key="labeler for ranker", value=labeled_urls)
         return labeled_urls
-

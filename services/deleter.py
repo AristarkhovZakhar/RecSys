@@ -1,5 +1,6 @@
 import os
 
+
 class Deleter:
     def delete(self, **kwargs):
         ti = kwargs['ti']

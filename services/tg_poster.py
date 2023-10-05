@@ -1,7 +1,8 @@
 import sys
+
 sys.path.append("../storage")
 
-from typing import List, Dict, Union
+from typing import List, Dict
 from telethon.sync import TelegramClient
 
 
