@@ -8,14 +8,14 @@ class DocumentService:
     def __init__(self, endpoint: str):
         self.endpoint = endpoint
 
-    async def __call__(self, session, text: str):
+    async def __call__(self, session, text: str) -> str:
         async with session.post(self.endpoint, json={"content": text}) as post:
             if post.status:
                 return (await post.json())['url']
             else:
                 return ''
 
-    async def push_news_to_service(self, news: List[str]):
+    async def push_news_to_service(self, news: List[str]) -> List[str]:
         async with ClientSession() as session:
             tasks = []
             for new in news:
@@ -24,7 +24,7 @@ class DocumentService:
             responses = await asyncio.gather(*tasks)
         return responses
 
-    def run_push_news_to_service(self, **kwargs):
+    def run_push_news_to_service(self, **kwargs) -> List[str]:
         ti = kwargs['ti']
         news = ti.xcom_pull(task_ids="run_push_from_disk", key="texts for webservice")
         print(news)

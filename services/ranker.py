@@ -1,21 +1,21 @@
 import random
-from typing import List
+from typing import List, Dict, Any
 
 from sentence_transformers import SentenceTransformer, util
 
 
 class Ranker:
-    def __init__(self, labels: List[str], tau=0.7):
-        self.labels = labels
+    def __init__(self, labels: List[str], tau=0.7, model_name: str = 'all-MiniLM-L6-v2'):
+        self.labels = labels[:10] #hardcode for this model
         self.tau = tau
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+        self.model = SentenceTransformer(model_name)
         self.scores = {label: 0 for label in labels}
         self.counts = {label: 0 for label in labels}
         self.n_ranged_labels = 8
         self.top_news = 3
         self.prev_message = ''
 
-    def get_valid_news(self, summary_items, labeler_items):
+    def get_valid_news(self, summary_items, labeler_items) -> List[Dict[str, str]]:
         messages = []
         for k in summary_items.keys():
             if not summary_items[k]['summary'] or not 'labels' in labeler_items[k].keys():
@@ -28,7 +28,7 @@ class Ranker:
             )
         return messages
 
-    def get_similarities(self, messages: List):
+    def get_similarities(self, messages: List[Dict[str, str]]) -> List[float]:
         if not self.prev_message:
             return [1] * len(messages)
         prev_embedding = self.model.encode(self.prev_message)
@@ -36,7 +36,7 @@ class Ranker:
         cosine_scores = util.cos_sim(prev_embedding, messages_embeddings)[0].tolist()
         return cosine_scores
 
-    def rank(self, messages):
+    def rank(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
         cosine_scores = self.get_similarities(messages)
         ranged_labels = random.choices(self.labels, weights=list(self.counts.values()), k=self.n_ranged_labels)
         for i, m in enumerate(messages):

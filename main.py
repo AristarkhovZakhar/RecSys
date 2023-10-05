@@ -1,35 +1,27 @@
+import json
+import sys
+from datetime import datetime
+
+from airflow import DAG
+from airflow.models import Variable
+from airflow.operators.python import PythonOperator
+from telethon import TelegramClient
+
+from configs.config import DocumentServiceConfig, YAServiceConfig, LabelerConfig
+from services.deleter import Deleter
 from services.document import DocumentService
 from services.labeler import Labeler
 from services.summarizator import YaGPTSummary
+from services.ranker import Ranker
+from services.tg_poster import TGPoster
 from services.yadisk_scheduler import YaDiskScheduler
-from services.tg_poster import Ranging, TGPoster
-from services.deleter import Deleter
-from backend.storage.ya_disk_storage import YaDiskStorage
 
-
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.models import Variable
-
-from datetime import datetime
-
-import json
-
-from configs.config import DocumentServiceConfig, YAServiceConfig, LabelerConfig
-
-import os
-from queue import Queue
-from typing import Tuple
-from telethon import TelegramClient, events
-import sys
-#data_dir = "/home/parser"
+# data_dir = "/home/parser"
 data_dir = "/opt/airflow/dags"
 sys.path.append(f"{data_dir}/")
 sys.path.append(f"{data_dir}/backend/parser/")
 sys.path.append(f"{data_dir}/configs/")
 from configs.config import APIConfig, ChannelsConfig
-from dataclasses import dataclass
-from dataclasses_json import dataclass_json
 
 with open(f"{data_dir}/configs/api.json") as f:
     api = APIConfig.from_dict(json.load(f))
@@ -47,20 +39,26 @@ with open(f"{data_dir}/configs/ya.json") as f:
 with open(f"{data_dir}/configs/labeler.json") as f:
     data = json.load(f)
     labeler_service_config = LabelerConfig.from_dict(data)
+with open(f"{data_dir}/configs/bot_token.json") as f:
+    bot_token = json.load(f)['bot_token']
+with open(f"/Users/zakhar/Projects/RecSys/configs/bot_token.json") as f:
+    bot_token = json.load(f)['bot_token']
+    bot = TelegramClient(api.username, api.api_id, api.api_hash).start(bot_token=bot_token)
 
-ROWS_TO_PUSH = int(Variable.get("ROWS_TO_PUSH_YADISK", default_var=5))
 
 storage_dir = f"{data_dir}/backend/data/"
 labeler_model_name = "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7"
+sbert_model_name = "all-MiniLM-L6-v2"
 
-yadisk_scheduler = YaDiskScheduler(storage_dir, ROWS_TO_PUSH)
 document = DocumentService(document_service_config.endpoint)
 summarizator = YaGPTSummary(ya_service_config.qa_token)
 labeler = Labeler(labeler_model_name, labeler_service_config.labels)
-ranker_executor = Ranging()
+ranker = Ranker(labels=labeler_service_config.labels, model_name=sbert_model_name)
 deleter = Deleter()
-poster_executor = TGPoster(client, channels)
+poster = TGPoster(bot, channels)
 
+ROWS_TO_PUSH = int(Variable.get("ROWS_TO_PUSH_YADISK", default_var=5))
+yadisk_scheduler = YaDiskScheduler(storage_dir, ROWS_TO_PUSH)
 
 with DAG(
         dag_id='main',
@@ -84,11 +82,11 @@ with DAG(
     )
     ranker = PythonOperator(
         task_id='get_ranks',
-        python_callable=ranker_executor.run_ranking_push_poster
+        python_callable=ranker.run_ranking_push_poster
     )
     poster = PythonOperator(
         task_id='post_news',
-        python_callable=poster_executor.run_post_messages
+        python_callable=poster.run_post_messages
     )
     deleter = PythonOperator(
         task_id='remove_files',

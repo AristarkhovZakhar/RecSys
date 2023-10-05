@@ -1,56 +1,8 @@
 import sys
-
 sys.path.append("../storage")
 
-from typing import List, Dict
+from typing import List, Dict, Any
 from telethon.sync import TelegramClient
-
-
-class Ranging:
-    def __init__(self, model=None) -> None:
-        self.model = model
-        self._news = {}
-
-    @property
-    def get_news(self):
-        return self._news
-
-    def get_messages(
-            self,
-            labeler_results: List[Dict],
-            summarizator_results: List[Dict],
-            sort_by_score: bool = False
-    ):
-        self._get_messages_from_summarizer(summarizator_results)
-        self._get_messages_from_labeler(labeler_results)
-
-        # TODO: self.score_smth_with_model
-        ranked_news = dict(
-            sorted(self._news.items(), key=lambda item: item[1]['score'])
-        ) if sort_by_score else self._news
-
-        return ranked_news
-
-    def _get_messages_from_summarizer(self, items: List[Dict]) -> None:
-        print(items)
-        for item in items:
-            self._news[item['url']] = self._news.get(item['url'], {})
-            self._news[item['url']]['text'] = item['summary']
-            self._news[item['url']]['score'] = 0
-
-    def _get_messages_from_labeler(self, items: List[Dict]) -> None:
-        print(items)
-        for item in items:
-            self._news[item['url']]['labels'] = item['labels']
-
-    def run_ranking_push_poster(self, **kwargs):
-        ti = kwargs['ti']
-        summary_items = ti.xcom_pull(task_ids='get_summary', key='summarizator for ranker')
-        labeler_items = ti.xcom_pull(task_ids='get_labels', key='labeler for ranker')
-        urls_news = self.get_messages(labeler_items, summary_items, sort_by_score=True)
-        ti.xcom_push(key='unformatted messages for posting', value=urls_news)
-
-        return urls_news
 
 
 class TGPoster:
@@ -69,12 +21,17 @@ class TGPoster:
         message += item['text']
         return message
 
-    def post_messages(self, news: Dict[str, Dict[str, float]]) -> None:
-        for channel in self.channels:
-            for url, value in news.items():
+    def post_messages(self, messages: List[Dict[str, Any]]) -> None:
+        for m in messages:
+            for channel in self.channels:
                 self._client.send_message(
                     channel,
-                    self._format_messages({'labels': value['labels'], 'text': value['text']})
+                    self._format_messages(
+                        {
+                            'labels': m['labels'],
+                            'text': m['text']
+                        }
+                    )
                 )
 
     def run_post_messages(self, **kwargs):

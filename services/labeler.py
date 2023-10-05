@@ -1,12 +1,11 @@
 import asyncio
-from typing import List
+from typing import List, Dict, Any
 
 import nest_asyncio
 import requests
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from transformers import pipeline
-
 nest_asyncio.apply()
 
 
@@ -22,7 +21,6 @@ class AsyncLabeler:
         page = requests.get(url)
         soup = BeautifulSoup(page.text, "html.parser")
         text = soup.find_all('p')[0].get_text()
-        text
         payload = {
             "inputs": text,
             "parameters": {"candidate_labels": self.labels}
@@ -58,11 +56,11 @@ class Labeler:
         self.labels = labels[:9]  # hardcode for this model
         self.labels += self.__get_unrecognized_label()
 
-    def __get_unrecognized_label(self):
+    def __get_unrecognized_label(self) -> List[str]:
         result_str = 'not '.join(self.labels)
         return [result_str]
 
-    def __call__(self, url: str):
+    def __call__(self, url: str) -> Dict[str, str]:
         page = requests.get(url)
         soup = BeautifulSoup(page.text, "html.parser")
         text = soup.find_all('p')[0].get_text()
@@ -70,7 +68,7 @@ class Labeler:
         output['text'] = text
         return {url: output}
 
-    def run_push_news_to_labeler(self, **kwargs):
+    def run_push_news_to_labeler(self, **kwargs) -> List[Dict[str, str]]:
         ti = kwargs['ti']
         service_urls = ti.xcom_pull(task_ids='run_push_news_to_service', key="document service")
         labeled_urls = []

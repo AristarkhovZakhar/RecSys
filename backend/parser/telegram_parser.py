@@ -1,22 +1,25 @@
 import json
 import os
+import sys
 from queue import Queue
 from typing import Tuple
 
 from telethon import TelegramClient, events
-import sys
+from telethon.tl.functions.channels import JoinChannelRequest
+
 data_dir = "/home/parser"
-#data_dir = "/opt/airflow/dags"
+# data_dir = "/opt/airflow/dags"
 sys.path.append(f"{data_dir}/")
 sys.path.append(f"{data_dir}/backend/parser/")
 sys.path.append(f"{data_dir}/configs/")
-from configs.config import APIConfig, ChannelsConfig
 
+from configs.config import APIConfig, ChannelsConfig
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
-
 import logging
-logging.basicConfig(level=logging.INFO, filename="parser_log.log",filemode="a")
+
+logging.basicConfig(level=logging.INFO, filename="parser_log.log", filemode="a")
+
 
 @dataclass_json
 @dataclass
@@ -121,14 +124,15 @@ async def main(parser: TelegramParser):
     for channel in channels:
         print(f"Название: {channel.title}, Идентификатор: {channel.id}")
 
+
 if __name__ == "__main__":
-     with open(f"{data_dir}/configs/api.json") as f:
+    with open(f"{data_dir}/configs/api.json") as f:
         api = APIConfig.from_dict(json.load(f))
-     with open(f"{data_dir}/configs/channels.json") as f:
+    with open(f"{data_dir}/configs/channels.json") as f:
         ap = json.load(f)
         channels = ChannelsConfig.from_dict(ap)
-     client = TelegramClient(api.username, api.api_id, api.api_hash)
-     parser = TelegramParser(client, channels)
-     with client:
+    client = TelegramClient(api.username, api.api_id, api.api_hash)
+    parser = TelegramParser(client, channels)
+    with client:
         client.loop.run_until_complete(main(parser))
-     parser.start_client()
+    parser.start_client()
