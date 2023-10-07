@@ -36,6 +36,9 @@ services:
     ports:
       - "8080:8080"
     environment: *airflow_environment
+    volumes:
+      - /Users/iopmanu/RecSys:/opt/airflow/dags
+      - /Users/iopmanu/RecSys/airflow.cfg:/opt/airflow/airflow.cfg
     command: webserver
   scheduler:
     image: *airflow_image
@@ -43,7 +46,8 @@ services:
     depends_on:
       - postgres
     volumes:
-      - /home/parser:/opt/airflow/dags
+      - /Users/iopmanu/RecSys:/opt/airflow/dags
+      - /Users/iopmanu/RecSys/airflow.cfg:/opt/airflow/airflow.cfg
     environment: *airflow_environment
     command: scheduler
 volumes:
