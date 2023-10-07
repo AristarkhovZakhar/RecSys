@@ -5,8 +5,8 @@ from typing import Tuple
 
 from telethon import TelegramClient, events
 import sys
-data_dir = "/home/parser"
-#data_dir = "/opt/airflow/dags"
+#data_dir = "/home/parser"
+data_dir = "/opt/airflow/dags"
 sys.path.append(f"{data_dir}/")
 sys.path.append(f"{data_dir}/backend/parser/")
 sys.path.append(f"{data_dir}/configs/")

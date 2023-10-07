@@ -5,13 +5,13 @@ from services.yadisk_scheduler import YaDiskScheduler
 from services.tg_poster import Ranging, TGPoster
 from services.deleter import Deleter
 from backend.storage.ya_disk_storage import YaDiskStorage
-
+i
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.models import Variable
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import json
 
@@ -64,7 +64,12 @@ poster_executor = TGPoster(client, channels)
 
 with DAG(
         dag_id='main',
-        start_date=datetime(2023, 10, 3)
+        start_date=datetime(2023, 10, 3),
+        max_active_runs=2,
+        max_active_tasks=2,
+        dagrun_timeout=timedelta(hours=1),
+        tags=["summarization", "labeling", "scoring", "ranking"],
+        default_args={}
 ) as dag:
     scheduler = PythonOperator(
         task_id='run_push_from_disk',

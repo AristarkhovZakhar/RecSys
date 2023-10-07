@@ -2,8 +2,8 @@ import argparse
 import json
 import os
 import sys
-data_dir = '/home/parser'
-#data_dir = "/opt/airflow/dags"
+#data_dir = '/home/parser'
+data_dir = "/opt/airflow/dags"
 sys.path.append(f"{data_dir}/")
 sys.path.append(f"{data_dir}/configs")
 sys.path.append(f"{data_dir}/backend/")
