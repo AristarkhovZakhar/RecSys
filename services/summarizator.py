@@ -29,28 +29,18 @@ class YaGPTSummary:
             if not 'sharing_url' in js.keys():
                 info = {
                     'success': False,
-                    'url': url,
-                    'title': '',
-                    'tokens': [],
                     'summary': ''
                 }
-                print(info)
-                return info
-            url = js['sharing_url']
-            page = requests.get(url)
+                return {url: info}
+            sharing_url = js['sharing_url']
+            page = requests.get(sharing_url)
             soup = BeautifulSoup(page.text, "html.parser")
-            title = self.text_decode(soup.find_all('h1', class_='title svelte-jpt3zn')[0].get_text()).strip()
-            tokens = [self.text_decode(item.get_text()).replace('• ', '').strip() for item in
-                      soup.find_all('li', class_='theses-item svelte-1tflzpo')]
-            summary = "".join(tokens)
+            summary = self.text_decode(soup.get_text()).replace('\n', '').replace('Пересказ YandexGPTYandexGPTкраткий пересказ статьи от нейросети', '').replace(' Для улучшения качествапредложите свой вариантСкопированоНе получилосьСкопировать ссылкуПерейти на оригиналХорошийПлохойПожаловаться на пересказВойти© 2023 ООО «Яндекс»Пересказы основаны на оригинале,в них могут быть ошибки и неточностиПользовательское соглашениеAPIПожаловаться на пересказYandexGPTКак использовать APIПолучить токенУ\xa0сервиса есть REST-образный интерфейс, позволяющий автоматизироватьработу. Для того, чтобы им\xa0воспользоваться, достаточно получить токен ииспользовать его при походе в\xa0API.Пример:      >>> import requests>>> endpoint = \'https://300.ya.ru/api/sharing-url\'>>> response = requests.post(    endpoint,    json = {      \'article_url\': \'https://habr.com/ru/news/729422/\'    },    headers = {\'Authorization\': \'OAuth <token>\'})>>> response.json(){  "status": "success",  "sharing_url": "https://300.ya.ru/3fOcYRBL"}    ', '')
             info = {
                 'success': True,
-                'url': url,
-                'title': title,
-                'tokens': tokens,
                 'summary': summary
             }
-        return info
+        return {url: info}
 
     async def push_news_to_summarization(self, service_urls: List[str]):
         async with ClientSession() as session:
@@ -68,5 +58,12 @@ class YaGPTSummary:
         future = asyncio.ensure_future(self.push_news_to_summarization(service_urls))
         loop.run_until_complete(future)
         responses = future.result()
-        ti.xcom_push(key='summarizator for ranker', value=responses)
-        return responses
+        to_push = {}
+        print(responses)
+        for i in responses:
+            print(i)
+            print(i.items())
+            url, info = list(i.items())[0]
+            to_push[url] = info
+        ti.xcom_push(key='summarizator for ranker', value=to_push)
+        return to_push

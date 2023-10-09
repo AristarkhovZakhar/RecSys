@@ -28,4 +28,6 @@ yarl==1.9.2
 torch
 transformers
 sentencepiece
+sentence_transformers
+
 

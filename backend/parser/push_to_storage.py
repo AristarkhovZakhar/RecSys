@@ -1,6 +1,5 @@
 import argparse
 import json
-import os
 import sys
 #data_dir = '/home/parser'
 data_dir = "/opt/airflow/dags"

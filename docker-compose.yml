@@ -36,6 +36,9 @@ services:
     ports:
       - "8080:8080"
     environment: *airflow_environment
+    volumes:
+      - /home/parser:/opt/airflow/dags
+      - /home/parser/airflow.cfg:/opt/airflow/airflow.cfg
     command: webserver
   scheduler:
     image: *airflow_image
@@ -44,6 +47,7 @@ services:
       - postgres
     volumes:
       - /home/parser:/opt/airflow/dags
+      - /home/parser/airflow.cfg:/opt/airflow/airflow.cfg
     environment: *airflow_environment
     command: scheduler
 volumes:
