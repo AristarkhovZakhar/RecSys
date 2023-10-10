@@ -1,4 +1,5 @@
 import asyncio
+import json
 from typing import List, Dict, Any
 
 import nest_asyncio
@@ -21,8 +22,8 @@ class AsyncLabeler:
             Variable.set("LABELS", self.labels)
             scores = {l: 1 for l in self.labels}
             counts = {l: 1 for l in self.labels}
-            Variable.set('RANKER_SCORES', scores)
-            Variable.set('RANKER_COUNTS', counts)
+            Variable.set('RANKER_SCORES', json.dumps(scores, ensure_ascii=False))
+            Variable.set('RANKER_COUNTS', json.dumps(counts, ensure_ascii=False))
 
     async def __call__(self, session, url: str):
         page = requests.get(url)
