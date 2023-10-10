@@ -62,7 +62,7 @@ ranker = Ranker(model_name=sbert_model_name)
 #Variable.set('RANKER_COUNTS', counts)
 
 ROWS_TO_PUSH = int(Variable.get("ROWS_TO_PUSH_YADISK", default_var=2))
-yadisk_scheduler = YaDiskScheduler(storage_dir, ROWS_TO_PUSH)
+# yadisk_scheduler = YaDiskScheduler(storage_dir, ROWS_TO_PUSH)
 
 with DAG(
         dag_id='main',
@@ -85,12 +85,10 @@ with DAG(
     #     python_callable=labeler.run_push_news_to_labeler
     # )
 
-    start = DummyOperator(task_id='start')
     ranker = PythonOperator(
         task_id='get_ranks',
         python_callable=ranker.run_ranking_push_poster
     )
-    end = DummyOperator(task_id='end')
     # poster = PythonOperator(
     #     task_id='post_news',
     #     python_callable=poster.run_post_messages
