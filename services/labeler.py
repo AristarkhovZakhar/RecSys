@@ -63,9 +63,16 @@ class Labeler:
         self.classifier = pipeline("zero-shot-classification", model=model_name)
         self.labels = labels[:9]  # hardcode for this model
         self.labels += self.__get_unrecognized_label()
+        labels = Variable.get("LABELS", default_var=None)
+        if labels is None:
+            Variable.set("LABELS", self.labels)
+            scores = {l: 1 for l in self.labels}
+            counts = {l: 1 for l in self.labels}
+            Variable.set('RANKER_SCORES', json.dumps(scores, ensure_ascii=False))
+            Variable.set('RANKER_COUNTS', json.dumps(counts, ensure_ascii=False))
 
     def __get_unrecognized_label(self) -> List[str]:
-        result_str = 'not '.join(self.labels)
+        result_str = ' not '.join(self.labels)
         return [result_str]
 
     def __call__(self, url: str) -> Dict[str, str]:
