@@ -1,6 +1,6 @@
 import asyncio
 from typing import List
-
+import re
 import requests
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
@@ -27,18 +27,22 @@ class YaGPTSummary:
                                 headers={'Authorization': f'OAuth {self.__token}'}) as post:
             js = await post.json()
             if not 'sharing_url' in js.keys():
+                page = requests.get(url)
+                soup = BeautifulSoup(page.text, "html.parser")
                 info = {
                     'success': False,
-                    'summary': ''
+                    'summary': soup.get_text().strip()
                 }
                 return {url: info}
             sharing_url = js['sharing_url']
             page = requests.get(sharing_url)
             soup = BeautifulSoup(page.text, "html.parser")
-            summary = self.text_decode(soup.get_text()).replace('\n', '').replace('Пересказ YandexGPTYandexGPTкраткий пересказ статьи от нейросети', '').replace(' Для улучшения качествапредложите свой вариантСкопированоНе получилосьСкопировать ссылкуПерейти на оригиналХорошийПлохойПожаловаться на пересказВойти© 2023 ООО «Яндекс»Пересказы основаны на оригинале,в них могут быть ошибки и неточностиПользовательское соглашениеAPIПожаловаться на пересказYandexGPTКак использовать APIПолучить токенУ\xa0сервиса есть REST-образный интерфейс, позволяющий автоматизироватьработу. Для того, чтобы им\xa0воспользоваться, достаточно получить токен ииспользовать его при походе в\xa0API.Пример:      >>> import requests>>> endpoint = \'https://300.ya.ru/api/sharing-url\'>>> response = requests.post(    endpoint,    json = {      \'article_url\': \'https://habr.com/ru/news/729422/\'    },    headers = {\'Authorization\': \'OAuth <token>\'})>>> response.json(){  "status": "success",  "sharing_url": "https://300.ya.ru/3fOcYRBL"}    ', '')
+            summary = self.text_decode(soup.get_text()).replace('\n', '')
+            summary = summary.replace('Пересказ YandexGPTYandexGPTкраткий пересказ статьи от нейросети', '')
+            summary = re.sub('Для улучшения качествапредложите свой вариантСкопированоНе получилосьСкопировать.*', '', summary)
             info = {
                 'success': True,
-                'summary': summary
+                'summary': '\n🔹'.join(summary.split('•'))
             }
         return {url: info}
 

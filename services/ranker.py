@@ -5,15 +5,20 @@ from airflow.models import Variable
 from sentence_transformers import SentenceTransformer, util
 import json
 
+poster_data = "/opt/airflow/dags/backend/poster_data"
 
 class Ranker:
+    n_top_labels = 3
     def __init__(self, tau=0.7, model_name: str = 'all-MiniLM-L6-v2'):
-        self.labels = Variable.get('LABELS', default_var=['None'])
-        print(self.labels)
         self.tau = tau
         self.model = SentenceTransformer(model_name)
-        self.scores = json.loads(Variable.get('RANKER_SCORES', default_var=json.dumps({})))
-        self.counts = json.loads(Variable.get('RANKER_COUNTS', default_var=json.dumps({})))
+        self.scores = Variable.get("RANKER_SCORES", deserialize_json=True, default_var={})
+        self.counts = Variable.get("RANKER_COUNTS", deserialize_json=True, default_var={})
+        self.counter = int(Variable.get("RANKER_COUNTER", default_var=0))
+        self.labels = list(self.scores.keys())
+        print(self.labels, len(self.labels))
+        print(self.scores, len(self.scores), type(self.scores))
+        print(self.counts, len(self.counts), type(self.counts))
         self.n_ranged_labels = 2
         self.top_news = 1
         self.prev_message = ''
@@ -23,10 +28,12 @@ class Ranker:
         for k in summary_items.keys():
             if not summary_items[k]['summary'] or not 'scores' in labeler_items[k].keys():
                 continue
+            labels_to_scores = {l: s for l, s in zip(labeler_items[k]['labels'], labeler_items[k]['scores'])}
             messages.append(
                 {
                     'summary': summary_items[k]['summary'],
-                    'scores': {l: s for l, s in zip(labeler_items[k]['labels'], labeler_items[k]['scores'])}
+                    'labels': sorted(labeler_items[k]['labels'], key=lambda i: labels_to_scores[i], reverse=True)[:self.n_top_labels],
+                    'scores': labels_to_scores,
                 }
             )
         return messages
@@ -43,8 +50,6 @@ class Ranker:
         cosine_scores = self.get_similarities(messages)
         weights = [1] * len(list(self.counts.values())) if not any(list(self.counts.values())) else list(
             self.counts.values())
-        print(self.labels, len(self.labels))
-        print(weights, len(weights))
         ranged_labels = random.choices(self.labels, weights=weights, k=self.n_ranged_labels)
         for i, m in enumerate(messages):
             new_scores = {}
@@ -67,4 +72,9 @@ class Ranker:
         labeler_items = ti.xcom_pull(task_ids='get_labels', key='labeler for ranker')
         messages = self.get_valid_news(summary_items, labeler_items)
         message_to_push = self.rank(messages)
+        print(message_to_push)
         ti.xcom_push(key='unformatted messages for posting', value=message_to_push)
+        with open(f"{poster_data}/{self.counter}.json", "w") as f:
+            json.dump([message_to_push], f, ensure_ascii=False)
+        Variable.set("RANKER_COUNTER", self.counter+1)
+

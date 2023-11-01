@@ -8,7 +8,8 @@ from telethon import TelegramClient, events
 from telethon.tl.functions.channels import JoinChannelRequest
 
 #data_dir = "/home/parser"
-data_dir = "/opt/airflow/dags"
+#data_dir = "/opt/airflow/dags"
+data_dir = "/opt/src"
 sys.path.append(f"{data_dir}/")
 sys.path.append(f"{data_dir}/backend/parser/")
 sys.path.append(f"{data_dir}/configs/")
@@ -38,7 +39,7 @@ class Message:
 
 
 class TelegramParser:
-    DATA_DIR = f'{data_dir}/backend/parser/data'
+    DATA_DIR = f'{data_dir}/backend/data'
 
     def __init__(
             self,
@@ -51,7 +52,8 @@ class TelegramParser:
         self.client = client
         self.channels = channels
         self.queue = Queue()
-        self.filename_counter = 0
+        with open('parser_counter.cfg', 'r') as f:
+            self.filename_counter = 0 if not f else int(f.read().strip())
         self.storage_process = None
         self.n_auto_push_files = n_auto_push_files
 
@@ -92,6 +94,8 @@ class TelegramParser:
                             f.write(message.text)
                             logging.info(f"filename counter: {self.filename_counter}")
                         self.filename_counter += 1
+                        with open('parser_counter.cfg', 'w') as f:
+                            f.write(str(self.filename_counter))
                     logging.info(f"python3 push_to_storage.py --filepathes {' '.join(filepathes)}")
                     print(f"python3 push_to_storage.py --filepathes {' '.join(filepathes)}")
                     os.system(f"python3 push_to_storage.py --filepathes {' '.join(filepathes)}")

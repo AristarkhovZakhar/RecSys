@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 from abc import ABC
 
 sys.path.append('../storage')
@@ -28,7 +29,9 @@ class YaDiskScheduler(Scheduler):
             filepath = os.path.join(self.path_to_storage, file)
             filepathes.append(filepath)
             with open(filepath) as f:
-                texts.append(' '.join(f.readlines()))
+                news = re.sub('@.*', '', ' '.join(f.readlines()))
+                if len(news.strip()) > 0:
+                    texts.append(news)
         return filepathes, texts
 
     def run_push_service(self, **kwargs):

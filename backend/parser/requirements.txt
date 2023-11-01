@@ -25,7 +25,4 @@ typing_extensions==4.7.1
 urllib3==2.0.4
 yadisk==1.3.3
 yarl==1.9.2
-torch
-transformers
-sentencepiece
 
